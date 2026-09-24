@@ -14,7 +14,7 @@ Zero external dependencies required! Uses Python 3's built-in standard library.
 Open your terminal and run:
 
 ```bash
-cd /home/parv/Documents/SIH26-145
+cd YOUR_PATH
 ./run.sh
 ```
 *Or directly:*
@@ -41,7 +41,7 @@ Once the server is running, open your web browser and navigate to:
 ## 📁 Project Directory Structure
 
 ```text
-SIH26-145/
+SIH26-115/
 ├── server.py             # Python HTTP API Backend & SQLite DB Initializer
 ├── run.sh                # 1-Click Executable Launcher Script
 ├── README.md             # Project Setup & Operational Instructions
