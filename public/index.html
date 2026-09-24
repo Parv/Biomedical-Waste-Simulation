@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BioShield AI™ — Smart Medical Waste Management System</title>
+  
+  <!-- Google Fonts & Tailwind CSS CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons & jsPDF CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-[#0A0E17] text-gray-100 min-h-screen flex flex-col text-xs">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="border-b border-white/10 bg-[#0F172A]/90 backdrop-blur-md sticky top-0 z-40 px-5 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20">
+          <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold font-heading text-white flex items-center gap-2">
+            BioShield AI™
+            <span class="text-[10px] font-normal px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">BMW Rules 2016/2021</span>
+          </h1>
+          <p class="text-[11px] text-gray-400">Automated Smart Medical Waste Sorting & Telemetry System</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2">
+        <div class="hidden lg:flex items-center gap-2 px-3 py-1 rounded-lg bg-gray-900 border border-white/10 text-[11px]">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-gray-400">ESP32:</span>
+          <span class="font-mono text-emerald-400 font-bold">ONLINE</span>
+        </div>
+
+        <button id="btnRun5ItemDemo" class="px-4 py-2 text-xs font-bold rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all">
+          <i data-lucide="play" class="w-3.5 h-3.5 fill-white"></i>
+          Run 5-Waste Product Batch Demo
+        </button>
+
+        <button id="btnResetBins" class="px-3 py-2 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-white/10 flex items-center gap-1">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          Reset Bins
+        </button>
+
+        <button id="btnToggleBuzzer" class="px-2.5 py-2 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-white/10 flex items-center gap-1" title="Toggle Buzzer Mute">
+          <i data-lucide="volume-2" id="iconBuzzer" class="w-3.5 h-3.5 text-emerald-400"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- WORKFLOW STAGE PROGRESS BANNER -->
+  <section id="bannerSimulationProgress" class="bg-[#0F172A]/70 border-b border-white/10 px-5 py-2">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+      
+      <div class="flex items-center gap-2.5">
+        <span id="badgeBatchCount" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono text-[10px] font-bold">Item 1/5</span>
+        <div id="txtLiveExplanation" class="text-xs text-gray-200 font-medium">
+          Ready for biomedical waste disposal simulation. Select any waste product or run the 5-item batch demo.
+        </div>
+      </div>
+
+      <!-- 4 Compact Stages -->
+      <div class="flex items-center gap-1.5 text-[10px]">
+        <div class="stage-card active" id="stage-1">1. Ingestion</div>
+        <div class="stage-card" id="stage-2">2. AI Safety</div>
+        <div class="stage-card" id="stage-3">3. Tilt Servo</div>
+        <div class="stage-card" id="stage-4">4. Manifest</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-[#0F172A] border-b border-white/10 px-5">
+    <div class="max-w-7xl mx-auto flex items-center gap-2">
+      <button class="tab-btn active px-4 py-2.5 text-xs font-bold border-b-2 border-cyan-400 text-cyan-400 flex items-center gap-1.5 transition-all" data-tab="tab-hardware">
+        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+        1. Waste Workstation & AI (Steps 1–9)
+      </button>
+      <button class="tab-btn px-4 py-2.5 text-xs font-bold text-gray-400 hover:text-gray-200 border-b-2 border-transparent flex items-center gap-1.5 transition-all" data-tab="tab-bins">
+        <i data-lucide="boxes" class="w-3.5 h-3.5"></i>
+        2. Container Bins & Telemetry (Steps 10–11)
+      </button>
+      <button class="tab-btn px-4 py-2.5 text-xs font-bold text-gray-400 hover:text-gray-200 border-b-2 border-transparent flex items-center gap-1.5 transition-all" data-tab="tab-manifest">
+        <i data-lucide="file-check" class="w-3.5 h-3.5"></i>
+        3. Transport & Manifest (Steps 12–14)
+      </button>
+      <button class="tab-btn px-4 py-2.5 text-xs font-bold text-gray-400 hover:text-gray-200 border-b-2 border-transparent flex items-center gap-1.5 transition-all" data-tab="tab-guide">
+        <i data-lucide="book-open" class="w-3.5 h-3.5"></i>
+        4. BMW Rules Guide
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN APP CONTENT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 space-y-4">
+
+    <!-- OVERFLOW ALERT BANNER -->
+    <div id="alertBanner" class="hidden p-3.5 rounded-xl bg-red-500/15 border border-red-500/50 text-red-200 flex items-center justify-between gap-3 alert-pulse">
+      <div class="flex items-center gap-3">
+        <i data-lucide="siren" class="w-5 h-5 text-red-400 animate-bounce"></i>
+        <div>
+          <h4 class="font-bold text-xs text-white">CONTAINER CAPACITY ALERT (>80% CAPACITY)</h4>
+          <p id="alertBannerText" class="text-[11px] text-red-300">Bin capacity exceeded. Hardware buzzer sounding. Dispatch transport unit.</p>
+        </div>
+      </div>
+      <button id="btnDismissAlert" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-500 text-white">
+        Silence & Dispatch Cart
+      </button>
+    </div>
+
+    <!-- TAB 1: WORKSTATION & AI CLASSIFIER -->
+    <section id="tab-hardware" class="tab-content space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        <!-- LEFT COLUMN: CANVAS STATION (7 COLS) -->
+        <div class="lg:col-span-7 space-y-4">
+          
+          <!-- Canvas Visualizer Card -->
+          <div class="glass-panel p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <h3 class="font-bold text-xs text-white flex items-center gap-2">
+                <i data-lucide="scan" class="w-4 h-4 text-cyan-400"></i>
+                Mechanical Workstation (IR, Camera, Load Cell & Servo)
+              </h3>
+              <span id="txtServoStatus" class="text-[11px] px-2.5 py-0.5 rounded-full bg-gray-950 text-cyan-400 border border-cyan-500/30 font-mono font-bold">SERVO: IDLE (0°)</span>
+            </div>
+
+            <!-- Canvas View -->
+            <div class="relative rounded-lg overflow-hidden border border-white/10">
+              <canvas id="hardwareCanvas"></canvas>
+            </div>
+
+            <!-- Sensor Telemetry Footer -->
+            <div class="grid grid-cols-4 gap-2 text-center text-[11px]">
+              <div class="bg-gray-950/80 p-2 rounded-lg border border-white/10">
+                <div class="text-gray-400 text-[10px] font-semibold">IR PRESENCE (IR-1)</div>
+                <div id="txtIR1Status" class="font-bold text-emerald-400 mt-0.5">BEAM CLEAR</div>
+              </div>
+              <div class="bg-gray-950/80 p-2 rounded-lg border border-white/10">
+                <div class="text-gray-400 text-[10px] font-semibold">LOAD CELL MASS</div>
+                <div id="txtLoadCellWeight" class="font-bold text-yellow-400 font-mono mt-0.5">0.0 g</div>
+              </div>
+              <div class="bg-gray-950/80 p-2 rounded-lg border border-white/10">
+                <div class="text-gray-400 text-[10px] font-semibold">TRAY CLEAR (IR-2)</div>
+                <div id="txtIR2Status" class="font-bold text-emerald-400 mt-0.5">VERIFIED</div>
+              </div>
+              <div class="bg-gray-950/80 p-2 rounded-lg border border-white/10">
+                <div class="text-gray-400 text-[10px] font-semibold">RFID ACCESS</div>
+                <div id="txtRFIDStaff" class="font-bold text-cyan-400 font-mono mt-0.5">RF-8921</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Select 5 Waste Products Panel -->
+          <div class="glass-panel p-4 space-y-2.5">
+            <h4 class="font-bold text-[11px] uppercase tracking-wider text-gray-300 flex items-center justify-between">
+              <span>Select Waste Product to Insert:</span>
+              <span class="text-cyan-400 text-[10px] font-normal">Click any item to test</span>
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+              <button class="preset-btn text-left group border-yellow-500/30" data-item="gauze">
+                <div class="text-[11px] font-bold text-yellow-400 flex items-center gap-1">
+                  <i data-lucide="bandage" class="w-3.5 h-3.5"></i> 1. Yellow
+                </div>
+                <div class="text-xs font-bold text-white mt-0.5">Used Gauze</div>
+                <div class="text-[10px] text-gray-400">Infectious</div>
+              </button>
+
+              <button class="preset-btn text-left group border-red-500/30" data-item="iv_tubing">
+                <div class="text-[11px] font-bold text-red-400 flex items-center gap-1">
+                  <i data-lucide="pipette" class="w-3.5 h-3.5"></i> 2. Red
+                </div>
+                <div class="text-xs font-bold text-white mt-0.5">IV Tubing</div>
+                <div class="text-[10px] text-gray-400">Recyclable</div>
+              </button>
+
+              <button class="preset-btn text-left group border-slate-200/40" data-item="syringe_needle">
+                <div class="text-[11px] font-bold text-white flex items-center gap-1">
+                  <i data-lucide="syringe" class="w-3.5 h-3.5 text-cyan-400"></i> 3. White
+                </div>
+                <div class="text-xs font-bold text-white mt-0.5">Syringe</div>
+                <div class="text-[10px] text-red-400 font-bold">SHARPS LOCK!</div>
+              </button>
+
+              <button class="preset-btn text-left group border-blue-500/30" data-item="glass_vial">
+                <div class="text-[11px] font-bold text-blue-400 flex items-center gap-1">
+                  <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> 4. Blue
+                </div>
+                <div class="text-xs font-bold text-white mt-0.5">Glass Vial</div>
+                <div class="text-[10px] text-gray-400">Glassware</div>
+              </button>
+
+              <button class="preset-btn text-left group border-gray-500/30" data-item="food_wrapper">
+                <div class="text-[11px] font-bold text-gray-300 flex items-center gap-1">
+                  <i data-lucide="package" class="w-3.5 h-3.5"></i> 5. Black
+                </div>
+                <div class="text-xs font-bold text-white mt-0.5">Packaging</div>
+                <div class="text-[10px] text-gray-400">General</div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: AI & SAFETY DECISION (5 COLS) -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- Edge AI Classification Box -->
+          <div class="glass-panel p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <h3 class="font-bold text-xs text-white flex items-center gap-2">
+                <i data-lucide="brain" class="w-4 h-4 text-cyan-400"></i>
+                Edge AI Neural Classifier
+              </h3>
+              <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-gray-950 text-cyan-400 border border-cyan-500/30">MobileNetV2</span>
+            </div>
+
+            <!-- Identified Name & Category -->
+            <div class="bg-gray-950 p-3.5 rounded-xl border border-white/10 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Identified Waste Product</div>
+                <div id="txtAICategory" class="text-sm font-bold font-heading text-yellow-400 mt-0.5">Select waste product...</div>
+              </div>
+              <div id="badgeAICategoryColor" class="px-2.5 py-1 rounded-lg text-[11px] font-bold badge-yellow">
+                YELLOW
+              </div>
+            </div>
+
+            <!-- AI Confidence Meter -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-[11px] font-bold">
+                <span class="text-gray-300">AI Model Confidence:</span>
+                <span id="txtAIConfidence" class="font-mono text-cyan-400">0.0%</span>
+              </div>
+              <div class="w-full bg-gray-950 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/10">
+                <div id="barAIConfidence" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Treatment Recommendation -->
+            <div class="bg-gray-950 p-3 rounded-lg border border-white/10 space-y-1 text-[11px]">
+              <div class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">BMW Rules Treatment Method</div>
+              <div id="txtAITreatment" class="text-white font-semibold">--</div>
+            </div>
+          </div>
+
+          <!-- Step 5 Safety Decision Gate Box -->
+          <div class="glass-panel p-4 space-y-3">
+            <h3 class="font-bold text-xs text-white flex items-center gap-2">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+              Step 5: Safety Verification Gate
+            </h3>
+
+            <div id="boxSafetyStatus" class="p-3.5 rounded-xl bg-gray-950 border border-gray-800 text-center space-y-2">
+              <div id="iconSafetyGate" class="w-9 h-9 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+              </div>
+              <div id="txtSafetyTitle" class="font-bold text-xs text-white">System Standby</div>
+              <div id="txtSafetyDesc" class="text-[11px] text-gray-300">Place waste on tray to initiate automated safety verification.</div>
+            </div>
+
+            <div class="text-[11px] text-gray-300 space-y-1.5 pt-2 border-t border-white/10">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Conf > 85% & Non-Sharps &rarr; Auto tilting servo</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>Conf 60-85% &rarr; Staff manual confirmation prompt</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                <span>Sharps OR Conf < 60% &rarr; Lock automation hardware</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: CONTAINER BINS & TELEMETRY -->
+    <section id="tab-bins" class="tab-content hidden space-y-4">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold font-heading text-white">5-Compartment Waste Bin Status & Telemetry</h2>
+          <p class="text-[11px] text-gray-300">Real-time ultrasonic fill level height & load cell mass monitoring</p>
+        </div>
+        <button id="btnSimulateOverflow" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/40 flex items-center gap-1.5">
+          <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+          Simulate Bin Overflow (>80%)
+        </button>
+      </div>
+
+      <!-- 5 Bins Grid -->
+      <div id="gridBinCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <!-- Injected dynamically by app.js -->
+      </div>
+
+      <!-- Telemetry Logs Table -->
+      <div class="glass-panel p-4 space-y-3">
+        <h3 class="font-bold text-xs text-white flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+          ESP32 Telemetry Disposal Logs (Step 9 Data Record)
+        </h3>
+
+        <div class="overflow-x-auto rounded-lg border border-white/10">
+          <table class="w-full text-left text-[11px]">
+            <thead class="bg-gray-900 text-gray-200 border-b border-white/10 uppercase text-[10px] font-bold">
+              <tr>
+                <th class="p-2.5">Timestamp</th>
+                <th class="p-2.5">Staff ID / Name</th>
+                <th class="p-2.5">Waste Product</th>
+                <th class="p-2.5">Category</th>
+                <th class="p-2.5">Weight (g)</th>
+                <th class="p-2.5">AI Conf</th>
+                <th class="p-2.5">Safety Gate</th>
+                <th class="p-2.5">Treatment Method</th>
+              </tr>
+            </thead>
+            <tbody id="tableLogsBody" class="divide-y divide-white/10 text-gray-200 bg-gray-950 font-medium">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: TRANSPORT & DIGITAL MANIFEST -->
+    <section id="tab-manifest" class="tab-content hidden space-y-4">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+        <!-- Mobile Cart Tracker -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-panel p-4 space-y-3">
+            <h3 class="font-bold text-xs text-white flex items-center gap-2">
+              <i data-lucide="truck" class="w-4 h-4 text-cyan-400"></i>
+              Step 12: Mobile Transport Unit Tracker
+            </h3>
+            <p class="text-[11px] text-gray-300">Staff pushes waste cart from ward to Central Storage Facility.</p>
+
+            <div class="bg-gray-950 p-3.5 rounded-lg border border-white/10 space-y-2.5 text-[11px] font-semibold">
+              <div class="flex justify-between">
+                <span class="text-gray-400">Cart ID:</span>
+                <span class="font-mono text-cyan-400">CART-MOBILE-04</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Current Location:</span>
+                <span id="txtCartLocation" class="text-emerald-400">Central Storage Bay #4</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Custody Transfer:</span>
+                <span class="text-gray-200">Staff Nurse Priya &rarr; CBWTF Operator</span>
+              </div>
+
+              <div class="pt-1.5">
+                <div class="flex justify-between text-[10px] text-gray-400 mb-1 font-bold">
+                  <span>Ward Ingestion</span>
+                  <span>Transit Corridor</span>
+                  <span class="text-emerald-400">Central Storage</span>
+                </div>
+                <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-white/10">
+                  <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-full"></div>
+                </div>
+              </div>
+            </div>
+
+            <button id="btnDispatchManifest" class="w-full py-2.5 text-xs font-bold rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5">
+              <i data-lucide="file-signature" class="w-3.5 h-3.5"></i>
+              Handover to CBWTF & Generate Form IV Manifest
+            </button>
+          </div>
+        </div>
+
+        <!-- CPCB Form IV Manifest Document -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="glass-panel p-4 space-y-3 bg-[#0F172A]">
+            
+            <div class="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 class="text-sm font-bold font-heading text-white flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4 text-cyan-400"></i>
+                  CPCB Form IV Digital BMW Manifest
+                </h3>
+                <p class="text-[11px] text-gray-300">Authorized Handover to Common Bio-Medical Waste Treatment Facility</p>
+              </div>
+              <button id="btnExportPDF" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                Download PDF Manifest
+              </button>
+            </div>
+
+            <!-- Manifest Document Card -->
+            <div id="manifestDocCard" class="bg-gray-950 p-4 rounded-xl border border-white/10 space-y-3 text-[11px] font-mono">
+              <div class="flex justify-between border-b border-white/10 pb-2">
+                <div>
+                  <div class="text-gray-400 text-[10px]">MANIFEST NUMBER</div>
+                  <div id="mnfID" class="font-bold text-cyan-400 text-xs">BMW-MNF-2026-9912</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-gray-400 text-[10px]">TIMESTAMP</div>
+                  <div id="mnfTime" class="text-gray-200">2026-09-25 01:15:00</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 text-gray-200">
+                <div>
+                  <span class="text-gray-400 block text-[10px]">HEALTHCARE FACILITY</span>
+                  <span class="font-bold text-white">AIIMS Storage Bay #04</span>
+                </div>
+                <div>
+                  <span class="text-gray-400 block text-[10px]">CBWTF OPERATOR</span>
+                  <span class="font-bold text-white">BioClean Eco-Services</span>
+                </div>
+              </div>
+
+              <!-- Waste Table -->
+              <table class="w-full text-left border-collapse border border-white/10 my-2 text-[10px]">
+                <thead class="bg-gray-900 text-gray-200">
+                  <tr>
+                    <th class="p-2 border border-white/10">Category</th>
+                    <th class="p-2 border border-white/10">Color</th>
+                    <th class="p-2 border border-white/10">Treatment</th>
+                    <th class="p-2 border border-white/10">Weight</th>
+                  </tr>
+                </thead>
+                <tbody id="mnfTableBody" class="divide-y divide-white/10">
+                  <tr>
+                    <td class="p-2 border border-white/10">Yellow (Soiled)</td>
+                    <td class="p-2 border border-white/10 text-yellow-400 font-bold">Yellow</td>
+                    <td class="p-2 border border-white/10">Incineration (1050°C)</td>
+                    <td id="mnfWeightYellow" class="p-2 border border-white/10">1.25 kg</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border border-white/10">Red (Recyclable)</td>
+                    <td class="p-2 border border-white/10 text-red-400 font-bold">Red</td>
+                    <td class="p-2 border border-white/10">Autoclaving + Shredding</td>
+                    <td id="mnfWeightRed" class="p-2 border border-white/10">2.18 kg</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border border-white/10">White (Sharps)</td>
+                    <td class="p-2 border border-white/10 text-slate-200 font-bold">White</td>
+                    <td class="p-2 border border-white/10">Dry Heat Sterilization</td>
+                    <td id="mnfWeightWhite" class="p-2 border border-white/10">0.47 kg</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border border-white/10">Blue (Glassware)</td>
+                    <td class="p-2 border border-white/10 text-blue-400 font-bold">Blue</td>
+                    <td class="p-2 border border-white/10">Disinfection + Glass Recycling</td>
+                    <td id="mnfWeightBlue" class="p-2 border border-white/10">1.65 kg</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 border border-white/10">Black (General)</td>
+                    <td class="p-2 border border-white/10 text-gray-400 font-bold">Black</td>
+                    <td class="p-2 border border-white/10">Municipal Landfill</td>
+                    <td id="mnfWeightBlack" class="p-2 border border-white/10">3.40 kg</td>
+                  </tr>
+                  <tr class="bg-gray-900 font-bold text-xs">
+                    <td colspan="3" class="p-2 border border-white/10 text-right">TOTAL WEIGHT:</td>
+                    <td id="mnfWeightTotal" class="p-2 border border-white/10 text-cyan-400 font-bold">8.95 kg</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Signatures -->
+              <div class="grid grid-cols-2 gap-3 pt-1 border-t border-white/10 text-[10px]">
+                <div class="border border-white/10 p-2 rounded-lg bg-gray-900/60">
+                  <div class="text-gray-400">DIGITAL SIGNATURE (HCF)</div>
+                  <div class="font-bold text-emerald-400">Priya Sharma (#RF-8921)</div>
+                </div>
+                <div class="border border-white/10 p-2 rounded-lg bg-gray-900/60">
+                  <div class="text-gray-400">CBWTF HANDOVER</div>
+                  <div class="font-bold text-cyan-400">Ramesh Kumar (DL-01-EV)</div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 4: CPCB BMW RULES GUIDE -->
+    <section id="tab-guide" class="tab-content hidden space-y-4">
+      <div class="glass-panel p-4 space-y-3">
+        <h2 class="text-sm font-bold font-heading text-white flex items-center gap-2">
+          <i data-lucide="book-open" class="w-4 h-4 text-yellow-400"></i>
+          Step 14: CPCB Bio-Medical Waste Management Rules (2016/2021) Treatment Guide
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          
+          <div class="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 space-y-1">
+            <h3 class="font-bold text-yellow-400 text-xs flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+              YELLOW BIN (Infectious / Soiled / Anatomical)
+            </h3>
+            <p class="text-gray-300">Human anatomical waste, soiled cotton, dressings, gauze, expired/discarded medicines.</p>
+            <div class="font-bold text-yellow-300">Treatment: High-Temperature Incineration (1050°C) or Plasma Pyrolysis.</div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/30 space-y-1">
+            <h3 class="font-bold text-red-400 text-xs flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+              RED BIN (Contaminated Recyclable Waste)
+            </h3>
+            <p class="text-gray-300">Disposable IV tubing, catheters, urine bags, gloves, plastic bottles, syringes without needles.</p>
+            <div class="font-bold text-red-300">Treatment: Autoclaving / Microwaving + Shredding & Polymer Recycling.</div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-slate-200/10 border border-slate-200/30 space-y-1">
+            <h3 class="font-bold text-slate-200 text-xs flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+              WHITE CONTAINER (Waste Sharps Box)
+            </h3>
+            <p class="text-gray-300">Needles, scalpels, lancets, blades, fixed needle syringes, contaminated sharp metal.</p>
+            <div class="font-bold text-slate-100">Treatment: Dry Heat Sterilization / Autoclaving + Shredding / Encapsulation.</div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 space-y-1">
+            <h3 class="font-bold text-blue-400 text-xs flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+              BLUE BIN (Glassware & Metallic Implants)
+            </h3>
+            <p class="text-gray-300">Broken or intact glass medicine vials, ampoules, glass bottles, metallic implants.</p>
+            <div class="font-bold text-blue-300">Treatment: Disinfection + Glass Crushing & Recycling.</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONFIRMATION MODAL -->
+  <div id="modalConfirm" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-sm w-full p-5 space-y-3 border-amber-500/50 shadow-xl shadow-amber-500/20">
+      <div class="flex items-center gap-3 text-amber-400">
+        <i data-lucide="help-circle" class="w-6 h-6"></i>
+        <div>
+          <h3 class="font-bold text-sm text-white">Staff Confirmation Required</h3>
+          <p class="text-[11px] text-amber-300">AI Confidence is 60–85% (Step 5 Verification)</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-950 p-3 rounded-lg border border-white/10 space-y-2 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Item:</span>
+          <span id="modalConfirmItem" class="font-bold text-white">Ambiguous Container</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Suggestion:</span>
+          <span id="modalConfirmCategory" class="font-bold text-red-400">Red Bin (Recyclable)</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Confidence:</span>
+          <span id="modalConfirmConfidence" class="font-bold text-amber-400 font-mono">72.4%</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+        <button id="btnModalConfirmReject" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300">
+          Manual Override
+        </button>
+        <button id="btnModalConfirmAccept" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-400 text-gray-950">
+          Confirm & Proceed Servo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HARDWARE LOCK MODAL -->
+  <div id="modalLock" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-sm w-full p-5 space-y-3 border-red-500/60 shadow-xl shadow-red-500/30">
+      <div class="flex items-center gap-3 text-red-400">
+        <i data-lucide="lock" class="w-6 h-6 animate-pulse"></i>
+        <div>
+          <h3 class="font-bold text-sm text-white">AUTOMATION INTERLOCKED LOCK</h3>
+          <p class="text-[11px] text-red-300 font-semibold">Step 5 Safety Protocol Triggered!</p>
+        </div>
+      </div>
+
+      <div class="bg-red-500/10 p-3 rounded-lg border border-red-500/30 space-y-1.5 text-xs text-red-200">
+        <div id="modalLockReason" class="font-bold text-xs text-red-300">SHARPS DETECTED (Syringe / Scalpel)</div>
+        <p class="text-gray-300">Automated tray tilting is HARDWARE LOCKED to prevent puncture injury.</p>
+        <div class="p-2 rounded bg-gray-950 text-cyan-300 font-mono text-[10px] font-bold">
+          Please manually place item into White Translucent Puncture-Proof Sharps Box.
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-1.5 border-t border-white/10">
+        <button id="btnModalLockDismiss" class="w-full py-2 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-500 text-white">
+          I Have Manually Placed Sharps in Container (Unlock System)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS SCRIPTS -->
+  <script src="js/ai_engine.js"></script>
+  <script src="js/hardware_sim.js"></script>
+  <script src="js/manifest_gen.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
